@@ -20,7 +20,10 @@ Layout:
 | `bin/cas` | `python3 -I` launcher |
 | `cas/capture.py` | grim/slurp wrapper |
 | `cas/dialog.py` | GTK 4 note dialog |
-| `cas/brave_session.py` | SNSS `Session_*` reader |
+| `cas/browsers.py` | Window class → Brave/Chrome/Firefox/… |
+| `cas/session.py` | Dispatches to Chromium SNSS or Firefox mozLz4 |
+| `cas/chromium_session.py` | SNSS `Session_*` reader |
+| `cas/firefox_session.py` | `recovery.jsonlz4` reader |
 | `cas/store.py` | SQLite index |
 | `cas/safeio.py` | descriptor-bound read/write |
 | `cas/pngmeta.py` | PNG text chunks |

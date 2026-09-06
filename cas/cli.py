@@ -104,12 +104,14 @@ def cmd_note(path: str) -> int:
     try:
         meta = parse_text(split_chunks(blob))
         token = app_token(name.split("-")[0])
-        show_hint = token in {"brave", "chrome", "chromium", "firefox", "edge"}
+        from cas.browsers import identify_token
+
+        browser = identify_token(token)
         note, url = run_note_dialog(
-            show_url_hint=show_hint,
+            show_url_hint=browser is not None,
             app_name=token,
             window_title=str(meta.get("Title") or ""),
-            offer_brave_session=token == "brave",
+            session_browser=browser,
         )
         if url is None:
             url = parse_stored_url(meta.get("Source") or meta.get("URL") or "")

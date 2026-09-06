@@ -4,7 +4,7 @@ import os
 import tempfile
 import unittest
 
-from cas.brave_session import parse_active_tab_url
+from cas.chromium_session import parse_active_tab_url
 
 
 def _i32(n: int) -> bytes:
@@ -112,14 +112,15 @@ class BraveSessionTests(unittest.TestCase):
         self.assertIsNone(parse_active_tab_url(b"SNSS" + _u32(3)))
 
     def test_missing_profile_is_none(self) -> None:
-        from cas.brave_session import active_tab_url
+        from cas.chromium_session import active_tab_url
+        from cas.browsers import BRAVE
 
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         old = os.environ.get("HOME")
         os.environ["HOME"] = tmp.name
         try:
-            self.assertIsNone(active_tab_url())
+            self.assertIsNone(active_tab_url(root_parts=BRAVE.root_parts))
         finally:
             if old is None:
                 os.environ.pop("HOME", None)

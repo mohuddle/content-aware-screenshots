@@ -15,6 +15,7 @@ from cas.bounds import (
     SCREENSHOTS_SUBDIR,
     SLURP_TIMEOUT_S,
 )
+from cas.browsers import identify_class
 from cas.dialog import run_note_dialog
 from cas.hypr import Snapshot, match_region, parse_geometry, slurp_rects, snapshot, warp_to_focused
 from cas.names import app_token, screenshot_filename, timestamp_slug
@@ -52,7 +53,7 @@ def cmd_capture(*, skip_dialog: bool = False, note: str = "", url: str | None = 
             show_url_hint=win.is_browser(),
             app_name=token,
             window_title=win.title,
-            offer_brave_session=_is_brave(win.cls),
+            session_browser=identify_class(win.cls),
         )
         note_text = dialog_note
         if dialog_url:
@@ -92,11 +93,6 @@ def cmd_capture(*, skip_dialog: bool = False, note: str = "", url: str | None = 
         return abs_path
     finally:
         os.close(dest_fd)
-
-
-def _is_brave(cls: str) -> bool:
-    lowered = cls.lower()
-    return lowered.startswith("brave") or lowered in {"com.brave.browser"}
 
 
 def _cancel_if_slurp_running() -> None:

@@ -10,6 +10,7 @@ import stat
 from cas import CasError
 
 COMPONENT_RE = re.compile(r"^[A-Za-z0-9._-]+$")
+PROFILE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._ -]{0,62}$")
 _DOT_CONFIG_OK = re.compile(r"^[A-Za-z0-9._-]+$")
 
 
@@ -20,11 +21,14 @@ def home_dir() -> str:
     return home
 
 
-def _check_component(name: str) -> None:
+def _check_component(name: str, *, profile: bool = False) -> None:
     if name in (".", "..") or "/" in name or "\\" in name or not name:
         raise CasError("bad path component")
-    if name.startswith(".") and name not in (".local", ".config"):
-        # Hidden components we create ourselves.
+    if profile:
+        if not PROFILE_RE.fullmatch(name):
+            raise CasError("bad profile component")
+        return
+    if name.startswith(".") and name not in (".local", ".config", ".mozilla", ".zen", ".librewolf"):
         if not COMPONENT_RE.fullmatch(name.lstrip(".")):
             raise CasError("bad path component")
         return
@@ -70,6 +74,25 @@ def open_dir_chain(
     except BaseException:
         os.close(fd)
         raise
+
+
+def open_subdir(
+    parent_fd: int,
+    name: str,
+    *,
+    private: bool = False,
+    create: bool = False,
+    follow_user_symlink: bool = False,
+    profile: bool = False,
+) -> int:
+    _check_component(name, profile=profile)
+    return _open_component(
+        parent_fd,
+        name,
+        private=private,
+        create=create,
+        follow_user_symlink=follow_user_symlink,
+    )
 
 
 def _open_component(

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from cas.bounds import MAX_NOTE_CHARS, MAX_URL_BYTES
+from cas.browsers import Browser
 from cas.text import clean_note, plain
 from cas.urls import parse_stored_url
 
@@ -15,7 +16,7 @@ def run_note_dialog(
     show_url_hint: bool,
     app_name: str,
     window_title: str = "",
-    offer_brave_session: bool = False,
+    session_browser: Browser | None = None,
 ) -> tuple[str, str | None]:
     """Return (note, url). Skip/Esc yields empty note and no URL."""
     try:
@@ -39,7 +40,7 @@ def run_note_dialog(
     def on_activate(_app: Gtk.Application) -> None:
         win = Gtk.ApplicationWindow(application=app)
         win.set_title(WIN_TITLE)
-        win.set_default_size(560, 420 if offer_brave_session else 380)
+        win.set_default_size(560, 420 if session_browser else 380)
         win.set_modal(True)
         win.set_resizable(False)
 
@@ -100,8 +101,10 @@ def run_note_dialog(
         status.set_wrap(True)
         status.set_use_markup(False)
 
-        if offer_brave_session:
-            session_check = Gtk.CheckButton(label="Use current Brave tab URL")
+        if session_browser is not None:
+            session_check = Gtk.CheckButton(
+                label=f"Use current {session_browser.label} tab URL"
+            )
             session_check.set_active(False)
             box.append(session_check)
             box.append(status)
@@ -110,15 +113,17 @@ def run_note_dialog(
                 if not btn.get_active():
                     status.set_text("")
                     return
-                from cas.brave_session import active_tab_url
+                from cas.session import active_tab_url
 
-                found = active_tab_url(window_title=window_title)
+                found = active_tab_url(session_browser, window_title=window_title)
                 if found:
                     url_entry.set_text(found)
                     url_user_edited["value"] = True
                     status.set_text("")
                 else:
-                    status.set_text("No current Brave tab URL in the local session file.")
+                    status.set_text(
+                        f"No current {session_browser.label} tab URL in the local session file."
+                    )
 
             session_check.connect("toggled", on_session_toggle)
 

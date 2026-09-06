@@ -20,9 +20,11 @@ browser extension.
      **Paste URL**.
    - A copied `http(s)` URL is picked up while the dialog is open unless you
      already edited the field.
-   - On **Brave**, check **Use current Brave tab URL** to fill the field from
-     the local `Session_*` file. That file can lag a moment behind a
-     just-switched tab. The box is off until you check it.
+   - If the window is **Brave, Chrome, Chromium, Edge, Vivaldi, Firefox,
+     LibreWolf, or Zen**, check **Use current {browser} tab URL**. That reads
+     the matching local session file for the selected tab. The box is off
+     until you check it. The file can lag a moment behind a just-switched
+     tab.
 5. The file is `~/Pictures/screenshots/{app}-{YYYY-MM-DD}_{HH-MM-SS}.png`.
 
 Stock **Print** is unchanged (`omarchy-capture-screenshot`). This is a second
@@ -86,16 +88,29 @@ Override the pictures root with `OMARCHY_SCREENSHOT_DIR` only if it is an
 absolute path under `$HOME`. `cas` then writes a `screenshots` subdirectory
 there.
 
-## Brave session URL
+## Session-file URL (opt-in checkbox)
 
-Checking **Use current Brave tab URL** reads the newest
-`~/.config/BraveSoftware/Brave-Browser/Default/Sessions/Session_[0-9]+` file
-(Chromium SNSS). It replays the command log to find the selected tab’s
-`http(s)` URL. It does not use `Tabs_*` (that file is closed-tab restore).
-Incognito is not persisted. Multiple windows: the Hyprland window title is
-matched when possible, otherwise the last selected window in the file.
+The window class from Hyprland picks the store:
 
-The reader never writes that directory and never talks to Brave over IPC.
+| Window class (examples) | Store |
+|---|---|
+| `brave-browser` | `~/.config/BraveSoftware/Brave-Browser/<profile>/Sessions/Session_*` |
+| `chromium` | `~/.config/chromium/<profile>/Sessions/Session_*` |
+| `google-chrome` | `~/.config/google-chrome/<profile>/Sessions/Session_*` |
+| `microsoft-edge` | `~/.config/microsoft-edge/<profile>/Sessions/Session_*` |
+| `vivaldi` | `~/.config/vivaldi/<profile>/Sessions/Session_*` |
+| `firefox` | `~/.mozilla/firefox/<profile>/sessionstore-backups/recovery.jsonlz4` |
+| `librewolf` | `~/.librewolf/<profile>/sessionstore-backups/recovery.jsonlz4` |
+| `zen` / `zen-browser` | `~/.zen/<profile>/sessionstore-backups/recovery.jsonlz4` |
+
+Chromium-family browsers use SNSS `Session_*` (not `Tabs_*`, which is
+closed-tab restore). The profile is `Local State` `last_used`, else
+`Default`. Firefox-family browsers use mozLz4 JSON; the profile comes from
+`profiles.ini` (`Default=1`). Incognito is not persisted. Multiple windows:
+the Hyprland window title is matched when possible.
+
+The reader never writes those directories and never talks to the browser over
+IPC or the network.
 
 ## Security notes
 
@@ -111,9 +126,9 @@ The reader never writes that directory and never talks to Brave over IPC.
   `file:`, and option-shaped values are dropped.
 - Window titles, clipboard text, and session-file strings are untrusted. They
   are not executed and not rendered as markup.
-- The Brave session reader runs only after you check the box. It opens the
-  newest matching `Session_*` file with `O_NOFOLLOW`, an 8 MiB cap, and a
-  command cap.
+- The session reader runs only after you check the box. Chromium `Session_*`
+  files and Firefox `recovery.jsonlz4` are opened `O_NOFOLLOW` with an 8 MiB
+  cap. `javascript:` / `file:` URLs are dropped.
 - `XDG_RUNTIME_DIR` must be a `/run/user/` path; there is no `/tmp` fallback.
 - Notifications are text only. There is no stored `--exec` action.
 
